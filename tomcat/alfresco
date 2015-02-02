@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# Alfresco Tomcat startup
+# locale available substituted with this variable @@LOCALESUPPORT@@
+
+# PROVIDE: alfresco
+# REQUIRE: LOGIN FILESYSTEMS
+# KEYWORD: shutdown
+
+name="alfresco"
+rcvar="alfresco_enable"
+stop_cmd="alfresco_stop"
+start_cmd="alfresco_start"
+
+#pidfile="/var/run/${name}.pid"
+
+alfresco_start()
+{
+	# perform checks
+	# start
+}
+
+alfresco_stop()
+{
+	# perform checks
+	# start
+}
+
+load_rc_config $name
+run_rc_command "$1"
