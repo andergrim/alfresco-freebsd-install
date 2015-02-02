@@ -1,8 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 # -------
 # Script for install of Alfresco
 #
-# Copyright 2013-2014 Loftux AB, Peter Löfgren
+# Copyright 2015, Kristoffer Andergrim
+# Based on alfresco-ubuntu-install by Peter Löfgren, Loftux AB
 # Distributed under the Creative Commons Attribution-ShareAlike 3.0 Unported License (CC BY-SA 3.0)
 # -------
 
@@ -11,25 +12,25 @@ export ALF_DATA_HOME=$ALF_HOME/alf_data
 export CATALINA_HOME=$ALF_HOME/tomcat
 export ALF_USER=alfresco
 export ALF_GROUP=$ALF_USER
-export APTVERBOSITY="-qq -y"
 export TMP_INSTALL=/tmp/alfrescoinstall
 
-export BASE_DOWNLOAD=https://raw.githubusercontent.com/loftuxab/alfresco-ubuntu-install/master
+export BASE_DOWNLOAD=https://raw.githubusercontent.com/andergrim/alfresco-freebsd-install/master
 export KEYSTOREBASE=http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/keystore
 
 #Change this to prefered locale to make sure it exists. This has impact on LibreOffice transformations
 #export LOCALESUPPORT=sv_SE.utf8
 export LOCALESUPPORT=en_US.utf8
 
-export TOMCAT_DOWNLOAD=http://apache.mirrors.spacedump.net/tomcat/tomcat-7/v7.0.57/bin/apache-tomcat-7.0.57.tar.gz
 export JDBCPOSTGRESURL=http://jdbc.postgresql.org/download
 export JDBCPOSTGRES=postgresql-9.3-1102.jdbc41.jar
 export JDBCMYSQLURL=http://cdn.mysql.com/Downloads/Connector-J
 export JDBCMYSQL=mysql-connector-java-5.1.34.tar.gz
 
-export LIBREOFFICE=http://downloadarchive.documentfoundation.org/libreoffice/old/4.2.7.2/deb/x86_64/LibreOffice_4.2.7.2_Linux_x86-64_deb.tar.gz
+##TODO CHECK
+#export LIBREOFFICE=http://downloadarchive.documentfoundation.org/libreoffice/old/4.2.7.2/deb/x86_64/LibreOffice_4.2.7.2_Linux_x86-64_deb.tar.gz
 
-export SWFTOOLS=http://www.swftools.org/swftools-2013-04-09-1007.tar.gz
+##TODO CHECK
+#export SWFTOOLS=http://www.swftools.org/swftools-2013-04-09-1007.tar.gz
 
 export ALFREPOWAR=https://artifacts.alfresco.com/nexus/service/local/repo_groups/public/content/org/alfresco/alfresco/5.0.c/alfresco-5.0.c.war
 export ALFSHAREWAR=https://artifacts.alfresco.com/nexus/service/local/repo_groups/public/content/org/alfresco/share/5.0.c/share-5.0.c.war
@@ -40,35 +41,28 @@ export SPP=https://artifacts.alfresco.com/nexus/service/local/repo_groups/public
 export SOLR4_CONFIG_DOWNLOAD=https://artifacts.alfresco.com/nexus/service/local/repo_groups/public/content/org/alfresco/alfresco-solr4/5.0.c/alfresco-solr4-5.0.c-config-ssl.zip
 export SOLR4_WAR_DOWNLOAD=https://artifacts.alfresco.com/nexus/service/local/repo_groups/public/content/org/alfresco/alfresco-solr4/5.0.c/alfresco-solr4-5.0.c-ssl.war
 
-
-export BASE_BART_DOWNLOAD=https://raw.githubusercontent.com/toniblyx/alfresco-backup-and-recovery-tool/master/src/
-
-export BART_PROPERTIES=alfresco-bart.properties
-export BART_EXECUTE=alfresco-bart.sh
-
-
-# Color variables
-txtund=$(tput sgr 0 1)          # Underline
-txtbld=$(tput bold)             # Bold
-bldred=${txtbld}$(tput setaf 1) #  red
-bldgre=${txtbld}$(tput setaf 2) #  red
-bldblu=${txtbld}$(tput setaf 4) #  blue
-bldwht=${txtbld}$(tput setaf 7) #  white
-txtrst=$(tput sgr0)             # Reset
-info=${bldwht}*${txtrst}        # Feedback
-pass=${bldblu}*${txtrst}
-warn=${bldred}*${txtrst}
-ques=${bldblu}?${txtrst}
+## TODO CHECK
+#export BASE_BART_DOWNLOAD=https://raw.githubusercontent.com/toniblyx/alfresco-backup-and-recovery-tool/master/src/
+#export BART_PROPERTIES=alfresco-bart.properties
+#export BART_EXECUTE=alfresco-bart.sh
 
 echoblue () {
-  echo "${bldblu}$1${txtrst}"
+  printf '\033[1;34;40m'
+  echo $1
+  printf '\033[0m'
 }
 echored () {
-  echo "${bldred}$1${txtrst}"
+  printf '\033[1;31;40m'
+  echo $1
+  printf '\033[0m'
 }
 echogreen () {
-  echo "${bldgre}$1${txtrst}"
+  printf '\033[1;32;40m'
+  echo $1
+  printf '\033[0m'
 }
+
+# Create temp directory
 cd /tmp
 if [ -d "alfrescoinstall" ]; then
 	rm -rf alfrescoinstall
@@ -78,9 +72,9 @@ cd ./alfrescoinstall
 
 echo
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-echogreen "Alfresco Ubuntu installer by Loftux AB."
+echogreen "Alfresco FreeBSD installer"
 echogreen "Please read the documentation at"
-echogreen "https://github.com/loftuxab/alfresco-ubuntu-install."
+echogreen "https://github.com/andergrim/alfresco-freebsd-install."
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
 echo
 

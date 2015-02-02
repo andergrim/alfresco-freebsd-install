@@ -1,29 +1,30 @@
-Alfresco Ubuntu install
-=======================
+Alfresco FreeBSD install
+========================
+This install script and guide was created by Kristoffer Andergrim. 
 
-This install script and guide was created by Peter Löfgren, Loftux AB.  
-Please visit [https://loftux.se](https://loftux.se/sv?ref=ubuntuinstall "loftux.se") (Swedish) [https://loftux.com](https://loftux.com/en/?ref=ubuntuinstall "loftux.com") (English) for more information.  
-[![Loftux AB](https://loftux.se/themes/loftux_theme/assets/images/loftux-logo/logo-loftux-prefixed-small.png?ref=ubuntuinstall)](https://loftux.se?ref=ubuntuinstall)
+It is entirely based on the [alfresco-ubuntu-install](https://github.com/loftuxab/alfresco-ubuntu-install) project, by Peter Löfgren, Loftux AB. 
+Please visit [https://loftux.se](https://loftux.se/sv?ref=freebsdinstall "loftux.se") (Swedish) [https://loftux.com](https://loftux.com/en/?ref=freebsdinstall "loftux.com") (English) for more information.  
 
-Alfresco script based install for Ubuntu servers.
+Alfresco script based install for FreeBSD servers.
 ----------------------------
 
 This script will help you set up an Alfresco server instance with all necessary third party components.  
-Some will be installed via Ubuntu packages, some directly downloaded. The script will walk you through the process. In the end, there will be some manual tasks to complete the installation.
-
-Alfresco does have installers for Linux, and you may be better off with using those installers if you just want to do a quick test install. However, if you intend to run Alfresco in production, this script can help you both with the install, and by examine what the script does, learn what components are involved running an Alfresco instance. Any Alfresco administrator will have to learn that if you intend to use Alfresco in production.
+Some will be installed via FreeBSD pkgs (pkgng is assumed to be bootstrapped and working), some directly downloaded. The script will walk you through the process. In the end, there will be some manual tasks to complete the installation.
 
 Installing
 ----
-To start the install, in Ubuntu terminal run  
+To start the install, in the terminal run:
 
 ```
-curl -O https://raw.githubusercontent.com/loftuxab/alfresco-ubuntu-install/master/alfinstall.sh  
+curl -O https://raw.githubusercontent.com/andergrim/alfresco-freebsd-install/master/alfinstall.sh  
 chmod u+x alfinstall.sh
 ./alfinstall.sh
 ```
 
-All install options will be presented with an introduction. They default to 'n' (no), so type y to actually install that component. You need **sudo** access to install.  
+curl is not available by default in the FreeBSD environment, so you need to install its package before starting the installation.
+
+
+All install options will be presented with an introduction. They default to 'n' (no), so type y to actually install that component. You need root access to install.  
 
 But please do read all of this README before you go ahead.  
 There is also lots of documentation at http://docs.alfresco.com/4.2/index.jsp. To become an Alfresco server Administator, read the 'Administering' section.  
@@ -42,28 +43,20 @@ The Alfresco user is the server account used to run tomcat. You should never run
 
 In this part of the install is also an update to make sure a specific locale is supported (default sv_SE.utf8). This is useful for LibreOffice date formatting to work correctly during transformations.  
 
-Limits
---------
-Ubuntu default for number of allowed open files in the file system is too low for alfresco use and tomcat may because of this stop with the error "too many open files". You should update this value if you have not done so. Read more at http://wiki.alfresco.com/wiki/Too_many_open_files.
-
 Tomcat
 --------
-Tomcat is the java application server used to actually run Alfresco. The script downloads the latest version of Tomcat 7, and then updates its configuration files to better support running Alfresco.  
-Ubuntu upstart is used to stop and start tomcat. You **must** have a look and verify settings in the alfresco upstart file  
-`/etc/init/alfresco.conf`  
-Edit locale setting (LC_ALL) and the memory settings in this file to match your server.  
-About memory, it has default max set to 2G. That is good enough if you have about 5 users. So add more ram (and then some) to your server, update then Xmx setting in alfresco.conf. Your Alfresco instance will run much smoother.  
+Tomcat is the java application server used to actually run Alfresco. The script installs the latest version of Tomcat 7, and then updates its configuration files to better support running Alfresco.  
+A startup script `/usr/local/etc/rc.d/alfresco` will be added. Edit locale setting (LC_ALL) and the memory settings in this file to match your server.  
+About memory, it has default max set to 2G. That is good enough if you have about 5 users. So add more ram (and then some) to your server, update then Xmx setting in the alfresco rc script. Your Alfresco instance will run much smoother.  
 
 You will be presented with the option to add either MySql or Postgresql jdbc libraries. You should probably add at least one of them.
 
 Once the install is complete (the entire script and the manual steps following that), run  
-`sudo service alfresco start` to start and `sudo service alfresco stop` to stop tomcat.
+`service alfresco start` to start and `service alfresco stop` to stop tomcat.
 
 Nginx
 --------
 It is sometimes useful to have a front-end for your Tomcat Alfresco instance. Since Tomcat runs default on port 8080, you can use Nginx as proxy. It is also a lot easier to add ssl support. The default config includes sample configuration for this. Share resource files (anything loaded from /share/res/) is cached in nginx, so it doesn't need to be fetched from tomcat.  
-
-The script will use the latest version of the Ubuntu package from Nginx instead of default Ubuntu nginx packages. This allows for spdy support, sample config for this is included (you need an ssl certificate for this).
 
 **Caveat:** The upload progress bar in Share will show the upload as complete when the upload from client to nginx is complete, but the upload from nginx to Tomcat Share/Alfresco continues shortly. Usually this is barely noticeable, since server connections speeds are a lot faster than client server connections.
 
@@ -80,32 +73,33 @@ If you want to implement this support and already have run the alfinstall.sh scr
 
 Java JDK
 --------
-Install OpenJDK. You may want to use Oracle Java, but download and install of Oracle Java could not be scripted. If you choose to use Oracle Java, adjust paths setting in `/etc/init/alfresco.conf`.
+This script installs OpenJDK. You may want to use Oracle Java, but download and install of Oracle Java could not be scripted. More information about installing Oracle Java in FreeBSD is available [here](https://www.freebsd.org/java/install.html).
 
-LibreOffice
--------------
-Downloads and install LibreOffice from libreoffice.org (technically from a mirror). Alfresco just use LibreOffice for transformations, and later versions have better (hopefully) conversion filters.
-In this step ImageMagick is also installed from Ubuntu standard packages, if you skip this step install ImageMagick separately. Some extra font packages like Microsoft true type fonts is also installed, since you likely will add documents to Alfresco that have used them, this will result in better transformations.  
+OpenJDK (as well as bash shell and other components you may or may not use already) required fdesc and proc file systems to be mounted. The following lines should be added to your /etc/fstab 
+
+```
+        fdesc   /dev/fd         fdescfs         rw      0       0
+        proc    /proc           procfs          rw      0       0
+```
 
 Swftools
 ---------
-Downloaded and compiled. Since it is compiled locally the script first installs tools for compiling using standard Ubuntu packages.
+TODO
 
 ImageMagick  
 ---------  
-Installed using the Ubuntu default package.  
-If you get the error `no decode delegate for this image format` on start in the alfresco.log make sure to check that the path for `img.coders=` in alfresco-global.properties. The path may be version specific for the installed version.  
+Installed using the FreeBSD default package.  
+
 
 Alfresco
 ---------
-Download and install of Alfresco itself. Or rather, the alfresco.war and share.war and adds them to tomcat/webapps folder. Current version is 5.0.b.
+Download and install of Alfresco itself. Or rather, the alfresco.war and share.war and adds them to tomcat/webapps folder. Current version is 5.0.c.
 You also have the option to install Google Docs and Sharepoint addons. Skip if you do not intend to use them, you can always add then later.
 You can completely skip this step if you intend to use Enterprise version or any other version. See also the special section about the addons directory.
 
 Solr
 ---------
-You have a choice lucene (default) or Solr as indexing engine. Solr runs as a separate application and is slightly more complex to configure. As Solr is more advanced and handle multilingual better it is recommended that you install Solr.
-If you choose to use Solr, remember to update default indexing engine (currently lucene) in alfresco-global.properties.  
+TODO
 
 Addons - Manage amps and war files.
 ========
@@ -157,12 +151,13 @@ Yes (and is also recommended for best performance), but all components are not n
 The script does not use version x of component z, can you fix this?
 ---
 Probably, but you can also. Just edit the script with the version you want to use, most of the specific links can be found in the beginning of the script.  
-Why does the script use the latest versions/not use Ubuntu packages?
+Why does the script use the latest versions/not use FreeBSD packages?
 ---
-This combination of packages/downloaded install has been found to work well. But that may not hold true always. If you feel more confident to run a specific version of a component, or want to use a standard Ubuntu package, modify the script. Or skip that part in the install script, and just use this script as an install guide on what needs to be in place for a production server.  
+This combination of packages/downloaded install has been found to work well. But that may not hold true always. If you feel more confident to run a specific version of a component, or want to use a standard FreeBSD package, modify the script. Or skip that part in the install script, and just use this script as an install guide on what needs to be in place for a production server.  
 
 
 License
 ===
-Copyright 2013-2014 Loftux AB, Peter Löfgren  
+Copyright 2015, Kristoffer Andergrim
+This guide as well as the script is based on the [alfresco-ubuntu-install](https://github.com/loftuxab/alfresco-ubuntu-install) project by Peter Löfgren, Loftux AB 
 Distributed under the Creative Commons Attribution-ShareAlike 3.0 Unported License (CC BY-SA 3.0)
