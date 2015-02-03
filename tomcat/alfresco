@@ -1,29 +1,53 @@
 #!/bin/sh
 #
 # Alfresco Tomcat startup
-# locale available substituted with this variable @@LOCALESUPPORT@@
-
+# Provided by https://github.com/andergrim/alfresco-freebsd-install
+#
 # PROVIDE: alfresco
-# REQUIRE: LOGIN FILESYSTEMS
+# REQUIRE: DAEMON
+# BEFORE: LOGIN
 # KEYWORD: shutdown
+
+export JAVA_HOME="/usr/local/openjdk7/"
+export JRE_HOME=$JAVA_HOME/jre
+export ALF_HOME="/opt/alfresco"
+export CATALINA_HOME="$ALF_HOME/tomcat"
+export CATALINA_PID="${ALF_HOME}/tomcat.pid"
+export USER=alfresco
+
+export LC_ALL=@@LOCALESUPPORT@@
+
+# IMPORTANT Updated to match memory available on your server.
+# For production, A server with at least 8G ram, and -Xmx6G is recommended. More is better!
+export JAVA_OPTS="-Xms1G -Xmx2G -Xss1024k -XX:MaxPermSize=256m"
+
+export JAVA_OPTS="${JAVA_OPTS} -Duser.country=US -Duser.region=US -Duser.language=en -Duser.timezone=\"Europe/Stockholm\" -d64"
+#Enable this if you encounter problems with transformations of certain pdfs. Side effect is disable of remote debugging
+#export JAVA_OPTS="${JAVA_OPTS}  -Djava.awt.headless=true"
+
+#File encoding may be correct, but we specify them to be sure
+export JAVA_OPTS="${JAVA_OPTS} -Dfile.encoding=UTF-8 -Dsun.jnu.encoding=UTF-8"
+export JAVA_OPTS="${JAVA_OPTS} -Dalfresco.home=${ALF_HOME} -Dcom.sun.management.jmxremote=true"
+export JAVA_OPTS="${JAVA_OPTS} -server"
+
+. /etc/rc.subr
 
 name="alfresco"
 rcvar="alfresco_enable"
-stop_cmd="alfresco_stop"
-start_cmd="alfresco_start"
+procname="java"
+pidfile="$CATALINA_PID"
 
-#pidfile="/var/run/${name}.pid"
+start_cmd="${name}_start"
+stop_cmd="${name}_stop"
 
 alfresco_start()
 {
-	# perform checks
-	# start
+  ${CATALINA_HOME}/bin/catalina.sh start
 }
 
 alfresco_stop()
 {
-	# perform checks
-	# start
+ ${CATALINA_HOME}/bin/catalina.sh stop
 }
 
 load_rc_config $name

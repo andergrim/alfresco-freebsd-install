@@ -18,8 +18,8 @@ export BASE_DOWNLOAD=https://raw.githubusercontent.com/andergrim/alfresco-freebs
 export KEYSTOREBASE=http://svn.alfresco.com/repos/alfresco-open-mirror/alfresco/HEAD/root/projects/repository/config/alfresco/keystore
 
 #Change this to prefered locale to make sure it exists. This has impact on LibreOffice transformations
-#export LOCALESUPPORT=sv_SE.utf8
-export LOCALESUPPORT=en_US.utf8
+#export LOCALESUPPORT=sv_SE.UTF-8
+export LOCALESUPPORT=en_US.UTF-8
 
 export JDBCMYSQLURL=http://cdn.mysql.com/Downloads/Connector-J
 export JDBCMYSQL=mysql-connector-java-5.1.34.tar.gz
@@ -146,12 +146,20 @@ if [ "$INSTALLTOMCAT" = "y" ]; then
   rm -rf $CATALINA_HOME/webapps/*
   # Get Alfresco config
 
+  ALFRC=`cat /etc/rc.conf | grep 'alfresco_enable="YES"' |wc -l`
+  if [ "$ALFRC" -eq "0" ]; then
+    printf '\nalfresco_enable="YES"\n' >> /etc/rc.conf
+  fi
+
   echo "Downloading tomcat configuration files..."
   curl -# -o $CATALINA_HOME/conf/server.xml $BASE_DOWNLOAD/tomcat/server.xml
   curl -# -o $CATALINA_HOME/conf/catalina.properties $BASE_DOWNLOAD/tomcat/catalina.properties
   curl -# -o $CATALINA_HOME/conf/tomcat-users.xml $BASE_DOWNLOAD/tomcat/tomcat-users.xml
+
   curl -# -o /usr/local/etc/rc.d/alfresco $BASE_DOWNLOAD/tomcat/alfresco
+  chmod +x /usr/local/etc/rc.d/alfresco
   sed -i '' "s/@@LOCALESUPPORT@@/$LOCALESUPPORT/g" /usr/local/etc/rc.d/alfresco
+
   # Create /shared
   mkdir -p $CATALINA_HOME/shared/classes/alfresco/extension
   mkdir -p $CATALINA_HOME/shared/classes/alfresco/web-extension
