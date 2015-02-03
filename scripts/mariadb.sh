@@ -1,8 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 # -------
-# Script for install of Mariadb to be used with Alfresco
+# Script for install of MariaDB to be used with Alfresco
 # 
-# Copyright 2013 Loftux AB, Peter Löfgren
+# Copyright 2015, Kristoffer Andergrim
+# Based on alfresco-ubuntu-install by Peter Löfgren, Loftux AB
 # Distributed under the Creative Commons Attribution-ShareAlike 3.0 Unported License (CC BY-SA 3.0)
 # -------
 
@@ -11,42 +12,45 @@ export ALFRESCOUSER=alfresco
 
 echo
 echo "--------------------------------------------"
-echo "This script will install MariaDB."
+echo "This script will install MariaDB database server"
 echo "and create alfresco database and user."
-echo "You may first be prompted for sudo password."
-echo "When prompted during MariaDB Install,"
-echo "type the default root password for MariaDB."
+echo "This script should be run as root."
 echo "--------------------------------------------"
 echo
 
-read -e -p "Install MariaDB? [y/n] " -i "n" installmariadb
-if [ "$installmariadb" = "y" ]; then
-  sudo apt-get install python-software-properties
-  sudo apt-key adv --recv-keys --keyserver keyserver.ubuntu.com 0xcbcb082a1bb943db
-  sudo add-apt-repository "deb http://mirror2.hs-esslingen.de/mariadb/repo/10.0/ubuntu $(lsb_release -cs) main"
-  sudo apt-get update
-  sudo apt-get install mariadb-server
+read -e -p "Install MariaDB database server? [y/N] " INSTALLMARIADB
+if [ "$INSTALLMARIADB" = "y" ]; then
+  pkg install -y mariadb100-server
+
+  echo Adding rc.conf knob setting
+  MDBRC=`cat /etc/rc.conf | grep 'mysql_enable="YES"' |wc -l`
+  if [ "$MDBRC" -eq "0" ]; then
+    printf '\nmysql_enable="YES"\n' >> /etc/rc.conf
+  fi
+
+  service mysql-server start
+
 fi
 
-read -e -p "Create Alfresco Database and user? [y/n] " -i "n" createdb
-if [ "$createdb" = "y" ]; then
-read -e -p "Enter the Alfresco database password:" ALFRESCOPASSWORD
-read -e -p "Re-Enter the Alfresco database password:" ALFRESCOPASSWORD2
-if [ "$ALFRESCOPASSWORD" == "$ALFRESCOPASSWORD2" ]
-then
-  echo "Creating Alfresco database and user."
-  echo "You must supply the root user password for MariaDB:"
-  mysql -u root -p << EOF
-create database $ALFRESCODB default character set utf8 collate utf8_bin;
-grant all on $ALFRESCODB.* to '$ALFRESCOUSER'@'localhost' identified by '$ALFRESCOPASSWORD' with grant option;
-grant all on $ALFRESCODB.* to '$ALFRESCOUSER'@'localhost.localdomain' identified by '$ALFRESCOPASSWORD' with grant option;
+read -e -p "Create Alfresco database and user? [y/N] " CREATEDB
+if [ "$CREATEDB" = "y" ]; then
+  read -e -p "Enter a new password for database user $ALFRESCOUSER: " ALFRESCOPASSWORD
+  read -e -p "Re-enter the password: " ALFRESCOPASSWORD2
+  if [ "$ALFRESCOPASSWORD" == "$ALFRESCOPASSWORD2" ]; then
+    echo "Creating Alfresco database ($ALFRESCODB) and user ($ALFRESCOUSER)."
+    echo "To add new database and user you need to enter the MySQL root password"
+    mysql -u root -p << EOF
+CREATE DATABASE $ALFRESCODB default character set utf8 collate utf8_bin;
+GRANT all on $ALFRESCODB.* to '$ALFRESCOUSER'@'localhost' identified by '$ALFRESCOPASSWORD' with grant option;
+GRANT all on $ALFRESCODB.* to '$ALFRESCOUSER'@'%' identified by '$ALFRESCOPASSWORD' with grant option;
+FLUSH PRIVILEGES;
 EOF
-  echo
-  echo "Remember to update alfresco-global.properties with the alfresco database password"
-  echo
-else
-  echo
-  echo "Passwords do not match. Please run the script again for better luck!"
-  echo
-fi
+    echo
+    echo "Remember to update alfresco-global.properties with the alfresco database password"
+    echo
+  else
+    echo
+    echo "Passwords do not match. Please run the script again for better luck!"
+    echo
+  fi
 fi
