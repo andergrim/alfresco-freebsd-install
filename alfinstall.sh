@@ -481,6 +481,10 @@ else
   echo
 fi
 
+###
+# DEBUG EXIT
+exit 0
+
 echo
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
 echo "Install Solr4 indexing engine."
