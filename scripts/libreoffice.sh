@@ -6,6 +6,9 @@
 # Distributed under the Creative Commons Attribution-ShareAlike 3.0 Unported License (CC BY-SA 3.0)
 # -------
 
+## TODO - run libreoffice/soffice as a daemon
+## http://osdir.com/ml/freebsd-questions/2012-03/msg00629.html
+
     # User under which tomcat will run
     USER=alfresco
     ALF_HOME=/opt/alfresco

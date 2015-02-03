@@ -213,13 +213,13 @@ if [ "$INSTALLTOMCAT" = "y" ]; then
   fi
 
   echo
-  read -e -p "Install Postgres JDBC Connector${ques} [y/N] " INSTALLPG
+  read -e -p "Install Postgres JDBC Connector [y/N] " INSTALLPG
   if [ "$INSTALLPG" = "y" ]; then
 	  pkg install -y postgresql-jdbc-9.2.1004 > /dev/null
 	  cp /usr/local/share/java/classes/postgresql.jar $CATALINA_HOME/lib
   fi
   echo
-  read -e -p "Install Mysql JDBC Connector${ques} [y/N] " INSTALLMY
+  read -e -p "Install Mysql JDBC Connector [y/N] " INSTALLMY
   if [ "$INSTALLMY" = "y" ]; then
     cd /tmp/alfrescoinstall
 	  curl -# -L -O $JDBCMYSQLURL/$JDBCMYSQL
@@ -247,7 +247,7 @@ echo "to Sharepoint plugin."
 echo "You can run Alfresco fine without installing nginx."
 echo "If you prefer to use Apache httpd or lighttpd, install that manually."
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-read -e -p "Install nginx${ques} [y/N] " INSTALLNGINX
+read -e -p "Install nginx [y/N] " INSTALLNGINX
 if [ "$INSTALLNGINX" = "y" ]; then
   echoblue "Installing nginx..."
   echo
@@ -268,7 +268,11 @@ if [ "$INSTALLNGINX" = "y" ]; then
   # Start service
   echo 
   echo "Starting nginx service..."
-  printf '\nnginx_enable="YES"\n' >> /etc/rc.conf
+  
+  NGINXRC=`cat /etc/rc.conf | grep 'nginx_enable="YES"' |wc -l`
+  if [ "$NGINXRC" -eq "0" ]; then
+    printf '\nnginx_enable="YES"\n' >> /etc/rc.conf
+  fi
   service nginx start
 
   echo
@@ -278,26 +282,22 @@ else
   echo "Skipping install of nginx"
 fi
 
-###
-# DEBUG EXIT
-exit 0
-
 echo
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
 echo "Install Java JDK."
 echo "This will install the OpenJDK version of Java. If you prefer Oracle Java"
-echo "you need to download and install that manually."
+echo "you need to download and install that manually (see README.md for more info)."
+echo "If you have installed Tomcat previously OpenJDK is most likely already installed."
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-read -e -p "Install OpenJDK7${ques} [y/n] " -i "n" installjdk
-if [ "$installjdk" = "y" ]; then
-  echoblue "Installing OpenJDK7. Fetching packages..."
-  apt-get $APTVERBOSITY install openjdk-7-jdk
+read -e -p "Install OpenJDK7 [y/N] " INSTALLJDK
+if [ "$INSTALLJDK" = "y" ]; then
+  echoblue "Installing OpenJDK7..."
+  pkg install -y openjdk
   echo
   echogreen "Finished installing OpenJDK"
   echo
 else
   echo "Skipping install of OpenJDK 7"
-  echored "IMPORTANT: You need to install other JDK and adjust paths for the install to be complete"
   echo
 fi
 
@@ -306,21 +306,17 @@ echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 echo "Install LibreOffice."
 echo "This will download and install the latest LibreOffice from libreoffice.org"
 echo "Newer version of Libreoffice has better document filters, and produce better"
-echo "transformations. If you prefer to use Ubuntu standard packages you can skip"
-echo "this install."
+echo "transformations."
+echo "Installing LibreOffice will also install X11. If you don't want X11 on your system"
+echo "you should skip this step."
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-read -e -p "Install LibreOffice${ques} [y/n] " -i "n" installibreoffice
-if [ "$installibreoffice" = "y" ]; then
-
-  cd /tmp/alfrescoinstall
-  curl -# -L -O $LIBREOFFICE
-  tar xf LibreOffice*.tar.gz
-  cd "$(find . -type d -name "LibreOffice*")"
-  cd DEBS
-  dpkg -i *.deb
+read -e -p "Install LibreOffice [y/N] " INSTALLIBREOFFICE
+if [ "$INSTALLIBREOFFICE" = "y" ]; then
+  echoblue "Installing LibreOffice..."
+  pkg install -y libreoffice > /dev/null
   echo
   echoblue "Installing some support fonts for better transformations."
-  apt-get $APTVERBOSITY install ttf-mscorefonts-installer fonts-droid
+  pkg install -y liberation-fonts-ttf droid-fonts-ttf > /dev/null
   echo
   echogreen "Finished installing LibreOffice"
   echo
@@ -328,26 +324,21 @@ else
   echo
   echo "Skipping install of LibreOffice"
   echored "If you install LibreOffice/OpenOffice separetely, remember to update alfresco-global.properties"
-  echored "Also run: sudo apt-get install ttf-mscorefonts-installer fonts-droid"
+  echored "Also run: pkg install liberation-fonts-ttf droid-fonts-ttf"
   echo
 fi
 
 echo
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
 echo "Install ImageMagick."
-echo "This will ImageMagick from Ubuntu packages."
+echo "This will ImageMagick (No X11) from FreeBSD package repositories."
 echo "It is recommended that you install ImageMagick."
 echo "If you prefer some other way of installing ImageMagick, skip this step."
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-read -e -p "Install ImageMagick${ques} [y/n] " -i "n" installimagemagick
-if [ "$installimagemagick" = "y" ]; then
-
-  echoblue "Installing ImageMagick. Fetching packages..."
-  apt-get $APTVERBOSITY install imagemagick ghostscript libgs-dev libjpeg62 libpng3
-  echo
-  IMAGEMAGICKVERSION=`ls /usr/lib/|grep -i imagemagick`
-  echoblue "Creating symbolic link for ImageMagick."
-  ln -s /usr/lib/$IMAGEMAGICKVERSION /usr/lib/ImageMagick
+read -e -p "Install ImageMagick [y/N] " INSTALLIMAGEMAGICK
+if [ "$INSTALLIMAGEMAGICK" = "y" ]; then
+  echoblue "Installing ImageMagick..."
+  pkg install -y ImageMagick-nox11 > /dev/null
   echo
   echogreen "Finished installing ImageMagick"
   echo
@@ -360,37 +351,31 @@ fi
 
 echo
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-echo "Install Swftools."
+echo "Install swftools."
 echo "This will download and install swftools used for transformations to Flash."
-echo "Since the swftools Ubuntu package is not included in all versions of Ubuntu,"
-echo "this install downloads from swftools.org and compiles."
+echo "Installing swftools will also install X11. If you don't want X11 on your system"
+echo "you should skip this step."
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-read -e -p "Install Swftools${ques} [y/n] " -i "n" installswftools
+read -e -p "Install swftools [y/N] " INSTALLSWFTOOLS
 
-if [ "$installswftools" = "y" ]; then
-  echoblue "Installing build tools and libraries needed to compile swftools. Fetching packages..."
-  apt-get $APTVERBOSITY install make build-essential ccache g++ libgif-dev libjpeg62-dev libfreetype6-dev libpng12-dev libt1-dev
-  cd /tmp/alfrescoinstall
-  echo "Downloading swftools..."
-  curl -# -O $SWFTOOLS
-  tar xf swftools*.tar.gz
-  cd "$(find . -type d -name "swftools*")"
-  ./configure
-  make && make install
+if [ "$INSTALLSWFTOOLS" = "y" ]; then
+  echoblue "Installing swftools..."
+  pkg install -y swftools > /dev/null
   echo
-  echogreen "Finished installing Swftools"
+  echogreen "Finished installing swftools"
   echo
 else
   echo
-  echo "Skipping install of Swftools."
-  echored "Remember to install swftools via Ubuntu packages or by any other mean."
+  echo "Skipping install of swftools."
+  echored "Remember to install swftools (pdf2swf) later."
   echo
 fi
 
 echo
 echoblue "Adding basic support files. Always installed if not present."
 echo
-# Always add the addons dir and scripts
+
+  # Always add the addons dir and scripts
   mkdir -p $ALF_HOME/addons/war
   mkdir -p $ALF_HOME/addons/share
   mkdir -p $ALF_HOME/addons/alfresco
@@ -399,6 +384,7 @@ echo
     curl -# -o $ALF_HOME/addons/apply.sh $BASE_DOWNLOAD/scripts/apply.sh
     chmod u+x $ALF_HOME/addons/apply.sh
   fi
+
   if [ ! -f "$ALF_HOME/addons/alfresco-mmt.jar" ]; then
     curl -# -o $ALF_HOME/addons/alfresco-mmt.jar $BASE_DOWNLOAD/scripts/alfresco-mmt.jar
   fi
@@ -408,6 +394,7 @@ echo
     echo "Downloading mariadb.sh install and setup script..."
     curl -# -o $ALF_HOME/scripts/mariadb.sh $BASE_DOWNLOAD/scripts/mariadb.sh
   fi
+
   if [ ! -f "$ALF_HOME/scripts/postgresql.sh" ]; then
     echo "Downloading postgresql.sh install and setup script..."
     curl -# -o $ALF_HOME/scripts/postgresql.sh $BASE_DOWNLOAD/scripts/postgresql.sh
@@ -418,27 +405,17 @@ echo
     curl -# -o $ALF_HOME/scripts/mysql.sh $BASE_DOWNLOAD/scripts/mysql.sh
   fi
 
-  if [ ! -f "$ALF_HOME/scripts/limitconvert.sh" ]; then
-    echo "Downloading limitconvert.sh script..."
-    curl -# -o $ALF_HOME/scripts/limitconvert.sh $BASE_DOWNLOAD/scripts/limitconvert.sh
-  fi
   if [ ! -f "$ALF_HOME/scripts/createssl.sh" ]; then
     echo "Downloading createssl.sh script..."
     curl -# -o $ALF_HOME/scripts/createssl.sh $BASE_DOWNLOAD/scripts/createssl.sh
   fi
+
   if [ ! -f "$ALF_HOME/scripts/libreoffice.sh" ]; then
     echo "Downloading libreoffice.sh script..."
     curl -# -o $ALF_HOME/scripts/libreoffice.sh $BASE_DOWNLOAD/scripts/libreoffice.sh
-    sed -i "s/@@LOCALESUPPORT@@/$LOCALESUPPORT/g" $ALF_HOME/scripts/libreoffice.sh
+    sed -i '' "s/@@LOCALESUPPORT@@/$LOCALESUPPORT/g" $ALF_HOME/scripts/libreoffice.sh
   fi
-  if [ ! -f "$ALF_HOME/scripts/iptables.sh" ]; then
-    echo "Downloading iptables.sh script..."
-    curl -# -o $ALF_HOME/scripts/iptables.sh $BASE_DOWNLOAD/scripts/iptables.sh
-  fi
-  if [ ! -f "$ALF_HOME/scripts/alfresco-iptables.conf" ]; then
-    echo "Downloading alfresco-iptables.conf upstart script..."
-    curl -# -o $ALF_HOME/scripts/alfresco-iptables.conf $BASE_DOWNLOAD/scripts/alfresco-iptables.conf
-  fi
+
   if [ ! -f "$ALF_HOME/scripts/ams.sh" ]; then
     echo "Downloading maintenance shutdown script..."
     curl -# -o $ALF_HOME/scripts/ams.sh $BASE_DOWNLOAD/scripts/ams.sh
@@ -464,20 +441,21 @@ echo
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
 echo "Install Alfresco war files."
 echo "Download war files and optional addons."
-echo "If you have downloaded your war files you can skip this step add them manually."
-echo "This install place downloaded files in the $ALF_HOME/addons and then use the"
+echo "If you have downloaded your war files you can skip this step and add them manually."
+echo "This install will place downloaded files in the $ALF_HOME/addons and then use the"
 echo "apply.sh script to add them to tomcat/webapps. Se this script for more info."
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-read -e -p "Add Alfresco war files${ques} [y/n] " -i "n" installwar
-if [ "$installwar" = "y" ]; then
+read -e -p "Add Alfresco war files [y/N] " INSTALLWAR
+if [ "$INSTALLWAR" = "y" ]; then
 
   echogreen "Downloading alfresco and share war files..."
   curl -# -o $ALF_HOME/addons/war/alfresco.war $ALFREPOWAR
   curl -# -o $ALF_HOME/addons/war/share.war $ALFSHAREWAR
 
   cd /tmp/alfrescoinstall
-  read -e -p "Add Google docs integration${ques} [y/n] " -i "n" installgoogledocs
-  if [ "$installgoogledocs" = "y" ]; then
+
+  read -e -p "Add Google docs integration [y/N] " INSTALLGOOGLEDOCS
+  if [ "$INSTALLGOOGLEDOCS" = "y" ]; then
   	echo "Downloading Google docs addon..."
     curl -# -O $GOOGLEDOCSREPO
     mv alfresco-googledocs-repo*.amp $ALF_HOME/addons/alfresco/
@@ -485,8 +463,8 @@ if [ "$installwar" = "y" ]; then
     mv alfresco-googledocs-share* $ALF_HOME/addons/share/
   fi
 
-  read -e -p "Add Sharepoint plugin${ques} [y/n] " -i "n" installspp
-  if [ "$installspp" = "y" ]; then
+  read -e -p "Add Sharepoint plugin [y/N] " INSTALLSPP
+  if [ "$INSTALLSPP" = "y" ]; then
     echo "Downloading Sharepoint addon..."
     curl -# -O $SPP
     mv alfresco-spp*.amp $ALF_HOME/addons/alfresco/
@@ -509,7 +487,7 @@ echo "Install Solr4 indexing engine."
 echo "You can run Solr4 on a separate server, unless you plan to do that you should"
 echo "install the Solr4 indexing engine on the same server as your repository server."
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-read -e -p "Install Solr4 indexing engine${ques} [y/n] " -i "n" installsolr
+read -e -p "Install Solr4 indexing engine [y/n] " -i "n" installsolr
 if [ "$installsolr" = "y" ]; then
 
   # Make sure we have unzip available
@@ -588,7 +566,7 @@ echo "tool based on Duplicity for Alfresco backups and restore from a local file
 echo "FTP, SCP or Amazon S3 of all its components: indexes, data base, content store "
 echo "and all deployment and configuration files."
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-read -p "Install B.A.R.T${ques} [y/n] " -i "n" installbart
+read -p "Install B.A.R.T [y/n] " -i "n" installbart
 
 if [ "$installbart" = "y" ]; then
  echogreen "Installing B.A.R.T"
@@ -657,7 +635,7 @@ echo "Scripted install complete"
 echored "Manual tasks remaining:"
 echo "1. Add database. Install scripts available in $ALF_HOME/scripts"
 echored "   It is however recommended that you use a separate database server."
-echo "2. Verify Tomcat memory and locale settings in /etc/init/alfresco.conf."
+echo "2. Verify Tomcat memory and locale settings in /usr/local/etc/rc.d/alfresco"
 echo "   Alfresco runs best with lots of memory. Add some more to \"lots\" and you will be fine!"
 echo "   Match the locale LC_ALL (or remove) setting to the one used in this script."
 echo "   Locale setting is needed for LibreOffice date handling support."
@@ -665,7 +643,8 @@ echo "3. Update database and other settings in alfresco-global.properties"
 echo "   You will find this file in $CATALINA_HOME/shared/classes"
 echo "4. Update properties for BART (if installed) in $ALF_HOME/scripts/bart/alfresco-bart.properties"
 echo "   DBNAME,DBUSER,DBPASS,DBHOST,REC_MYDBNAME,REC_MYUSER,REC_MYPASS,REC_MYHOST,DBTYPE "
-echo "5. Update cpu settings in $ALF_HOME/scripts/limitconvert.sh if you have more than 2 cores."
-echo "6. Start nginx if you have installed it: /etc/init.d/nginx start"
-echo "7. Start Alfresco/tomcat: sudo service alfresco start"
+echo "5. Start nginx if you have installed it: service nginx start"
+echo "6. Enable LibreOffice daemon (if this is the machine running the repository) by uncommenting"
+echo "   soffice_enable=\"YES\" in /etc/rc.conf"
+echo "7. Start Alfresco/tomcat: service alfresco start"
 echo

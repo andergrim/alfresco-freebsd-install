@@ -1,11 +1,12 @@
-#!/bin/bash
+#!/bin/sh
 # -------
 # Script for apply AMPs to installed WAR
 # 
-# Copyright 2013 Loftux AB, Peter Löfgren
+# Copyright 2015, Kristoffer Andergrim
+# Based on alfresco-ubuntu-install by Peter Löfgren, Loftux AB
 # Distributed under the Creative Commons Attribution-ShareAlike 3.0 Unported License (CC BY-SA 3.0)
 # -------
-export JAVA_HOME="/usr/lib/jvm/java-7-openjdk-amd64/"
+export JAVA_HOME="/usr/local/openjdk7/"
 export JRE_HOME=$JAVA_HOME/jre
 export PATH=$PATH:$HOME/bin:$JRE_HOME/bin
 export ALF_HOME=/opt/alfresco
@@ -33,7 +34,7 @@ if [ -e war/alfresco.war ]; then
 	fi
 	cp war/alfresco.war .
 	# Use ls listing instead of -directory option, that way we can control order amps is applied
-	for file in `ls -v alfresco/*.amp`;
+	for file in `ls alfresco/*.amp`;
 	do
   	if [[ ! -f "$file" ]]
   		then
@@ -52,7 +53,7 @@ if [ -e war/share.war ]; then
 	fi
 	cp war/share.war .
 	# Use ls listing instead of -directory option, that way we can control order amps is applied
-	for file in `ls -v share/*.amp`;
+	for file in `ls share/*.amp`;
 	do
   	if [[ ! -f "$file" ]]
   		then
@@ -77,7 +78,7 @@ fi
 copy(){
 	echo "------------------------"
 	echo "Copying new war files..."
-        SHUTDOWN_PORT=`netstat -vatn|grep LISTEN|grep 8005|wc -l`
+        SHUTDOWN_PORT=`sockstat | grep 8005 |wc -l`
         export JAVA_HOME=$JAVA_HOME
         if [ $SHUTDOWN_PORT -ne 0 ]; then
             echo "Alfresco is started, cannot copy while started"
@@ -115,7 +116,7 @@ copy(){
 				rm -rf ${CATALINA_HOME}/webapps/alfresco
 				rm -rf ${CATALINA_HOME}/webapps/share
 				echo "Restoring permissions on Tomcat"
-				chown -R ${USER}:nogroup ${CATALINA_HOME}
+				chown -R ${USER}:wheel ${CATALINA_HOME}
             fi
         fi
 }
