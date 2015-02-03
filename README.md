@@ -82,14 +82,17 @@ OpenJDK (as well as bash shell and other components you may or may not use alrea
         proc    /proc           procfs          rw      0       0
 ```
 
+LibreOffice
+---------
+Installed using the FreeBSD default package. It depends on a large number of X11 components which will be installed on your system even if you just want to run a headless transformation daemon. If this is not desired for your system you need to find another solution. If you come up with a good solution you are most welcome to contact me. 
+
 Swftools
 ---------
-TODO
+Installed using the FreeBSD default package. It depends one some X11 components. Also adds some Truetype fonts for better rendering.
 
 ImageMagick  
 ---------  
-Installed using the FreeBSD default package.  
-
+Installed using the FreeBSD default no-x11 package.  
 
 Alfresco
 ---------
@@ -97,9 +100,9 @@ Download and install of Alfresco itself. Or rather, the alfresco.war and share.w
 You also have the option to install Google Docs and Sharepoint addons. Skip if you do not intend to use them, you can always add then later.
 You can completely skip this step if you intend to use Enterprise version or any other version. See also the special section about the addons directory.
 
-Solr
+SOLR4
 ---------
-TODO
+As of Alfresco 5.0 Lucene is no longer supported (it was deprecated some time ago). SOLR4 is more or less a mandatory install in order to have a working Alfresco setup.
 
 Addons - Manage amps and war files.
 ========
@@ -121,8 +124,6 @@ In the directory `/opt/alfresco/scripts` there are some useful scripts installed
 `*/10 * * * * /opt/alfresco/scripts/libreoffice.sh start 2>&1 >> /opt/alfresco/logs/office.log`
 `0 2 * * * /opt/alfresco/scripts/libreoffice.sh restart 2>&1 > /opt/alfresco/logs/office.log`  
 This will make sure libreoffice is running (if not already started and tomcat is running). Once per night it will also do a complete restart (in case LibreOffice behaves badly).  
-* `iptables.sh` - Script to add port forwarding. Useful if you want to use cifs, ftp that will not run on lower port numbers if not root. Or if you´re not using nginx as front end and want to forward port 80 to 8080.  
-* `limitconvert.sh` - Script to limit the number of cpu:s ImageMagick convert can use during transformations. Some Document library views with large thumbnails can cause intensive transformation load, and this script make sure some resources are left for other work.  
 * `createssl.sh` - Create self signed certificates, useful for testing purposes. Works well with nginx.  
 * `mariadb.sh` - Install the mariadb database server (the MySql alternative). It is recommended that you instead use a dedicated database server. Seriously, do that. And do some database optimizations, out of scope for this install guide.  
 * `postgresql.sh` - Same as for MariaDB, but the postgres version.  
@@ -130,8 +131,7 @@ This will make sure libreoffice is running (if not already started and tomcat is
 
 Alfresco BART - Backup and Recovery Tool
 ========================================
-Alfresco BART is a third party tool to aid with your Backup and Recovery requirements.  
-You can do the basic install using this script, but it is **highly recommended** that you visit https://github.com/toniblyx/alfresco-backup-and-recovery-tool/ page to learn more on how to configure this tool.  
+Saved for a rainy day.
 
 FAQ  
 ===

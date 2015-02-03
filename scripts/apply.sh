@@ -36,7 +36,7 @@ if [ -e war/alfresco.war ]; then
 	# Use ls listing instead of -directory option, that way we can control order amps is applied
 	for file in `ls alfresco/*.amp`;
 	do
-  	if [[ ! -f "$file" ]]
+  	if [ ! -f "$file" ]
   		then
     	continue
   	fi
@@ -55,7 +55,7 @@ if [ -e war/share.war ]; then
 	# Use ls listing instead of -directory option, that way we can control order amps is applied
 	for file in `ls share/*.amp`;
 	do
-  	if [[ ! -f "$file" ]]
+  	if [ ! -f "$file" ]
   		then
     	continue
   	fi

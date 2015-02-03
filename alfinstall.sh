@@ -24,10 +24,7 @@ export LOCALESUPPORT=en_US.utf8
 export JDBCMYSQLURL=http://cdn.mysql.com/Downloads/Connector-J
 export JDBCMYSQL=mysql-connector-java-5.1.34.tar.gz
 
-##TODO CHECK
 export LIBREOFFICE=http://downloadarchive.documentfoundation.org/libreoffice/old/4.2.7.2/deb/x86_64/LibreOffice_4.2.7.2_Linux_x86-64_deb.tar.gz
-
-##TODO CHECK
 export SWFTOOLS=http://www.swftools.org/swftools-2013-04-09-1007.tar.gz
 
 export ALFREPOWAR=https://artifacts.alfresco.com/nexus/service/local/repo_groups/public/content/org/alfresco/alfresco/5.0.c/alfresco-5.0.c.war
@@ -38,11 +35,6 @@ export SPP=https://artifacts.alfresco.com/nexus/service/local/repo_groups/public
 
 export SOLR4_CONFIG_DOWNLOAD=https://artifacts.alfresco.com/nexus/service/local/repo_groups/public/content/org/alfresco/alfresco-solr4/5.0.c/alfresco-solr4-5.0.c-config-ssl.zip
 export SOLR4_WAR_DOWNLOAD=https://artifacts.alfresco.com/nexus/service/local/repo_groups/public/content/org/alfresco/alfresco-solr4/5.0.c/alfresco-solr4-5.0.c-ssl.war
-
-## TODO CHECK
-#export BASE_BART_DOWNLOAD=https://raw.githubusercontent.com/toniblyx/alfresco-backup-and-recovery-tool/master/src/
-#export BART_PROPERTIES=alfresco-bart.properties
-#export BART_EXECUTE=alfresco-bart.sh
 
 echoblue () {
   printf '\033[1;34;40m'
@@ -481,22 +473,18 @@ else
   echo
 fi
 
-###
-# DEBUG EXIT
-exit 0
-
 echo
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
 echo "Install Solr4 indexing engine."
 echo "You can run Solr4 on a separate server, unless you plan to do that you should"
 echo "install the Solr4 indexing engine on the same server as your repository server."
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-read -e -p "Install Solr4 indexing engine [y/n] " -i "n" installsolr
-if [ "$installsolr" = "y" ]; then
+read -e -p "Install SOLR4 indexing engine [y/N] " INSTALLSOLR
+if [ "$INSTALLSOLR" = "y" ]; then
 
   # Make sure we have unzip available
-  apt-get $APTVERBOSITY install unzip
-
+  pkg install -y unzip > /dev/null
+  
   # Check if we have an old install
   if [ -d "$ALF_HOME/solr4" ]; then
      mv $ALF_HOME/solr4 $ALF_HOME/solr4_BACKUP_`eval date +%Y%m%d%H%M`
@@ -527,15 +515,13 @@ if [ "$installsolr" = "y" ]; then
 
   # Set the solr data path
   SOLRDATAPATH="$ALF_DATA_HOME/solr4"
-  # Escape for sed
-  SOLRDATAPATH="${SOLRDATAPATH//\//\\/}"
-
+  
   mv $ALF_HOME/solr4/workspace-SpacesStore/conf/solrcore.properties $ALF_HOME/solr4/workspace-SpacesStore/conf/solrcore.properties.orig
   mv $ALF_HOME/solr4/archive-SpacesStore/conf/solrcore.properties $ALF_HOME/solr4/archive-SpacesStore/conf/solrcore.properties.orig
-  sed "s/@@ALFRESCO_SOLR4_DATA_DIR@@/$SOLRDATAPATH/g" $ALF_HOME/solr4/workspace-SpacesStore/conf/solrcore.properties.orig >  $TMP_INSTALL/solrcore.properties
-  mv  $TMP_INSTALL/solrcore.properties $ALF_HOME/solr4/workspace-SpacesStore/conf/solrcore.properties
-  sed "s/@@ALFRESCO_SOLR4_DATA_DIR@@/$SOLRDATAPATH/g" $ALF_HOME/solr4/archive-SpacesStore/conf/solrcore.properties.orig >  $TMP_INSTALL/solrcore.properties
-  mv  $TMP_INSTALL/solrcore.properties $ALF_HOME/solr4/archive-SpacesStore/conf/solrcore.properties
+  sed "s|@@ALFRESCO_SOLR4_DATA_DIR@@|$SOLRDATAPATH|g" $ALF_HOME/solr4/workspace-SpacesStore/conf/solrcore.properties.orig >  $TMP_INSTALL/solrcore.properties
+  mv $TMP_INSTALL/solrcore.properties $ALF_HOME/solr4/workspace-SpacesStore/conf/solrcore.properties
+  sed "s|@@ALFRESCO_SOLR4_DATA_DIR@@|$SOLRDATAPATH|g" $ALF_HOME/solr4/archive-SpacesStore/conf/solrcore.properties.orig >  $TMP_INSTALL/solrcore.properties
+  mv $TMP_INSTALL/solrcore.properties $ALF_HOME/solr4/archive-SpacesStore/conf/solrcore.properties
 
   echo "<?xml version=\"1.0\" encoding=\"utf-8\"?>" > $TMP_INSTALL/solr4.xml
   echo "<Context debug=\"0\" crossContext=\"true\">" >> $TMP_INSTALL/solr4.xml
@@ -562,75 +548,10 @@ else
   echo
 fi
 
-echo
-echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-echo "Alfresco BART - Backup and Recovery Tool"
-echo "Alfresco BART is a backup and recovery tool for Alfresco ECM. Is a shell script"
-echo "tool based on Duplicity for Alfresco backups and restore from a local file system,"
-echo "FTP, SCP or Amazon S3 of all its components: indexes, data base, content store "
-echo "and all deployment and configuration files."
-echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-read -p "Install B.A.R.T [y/n] " -i "n" installbart
-
-if [ "$installbart" = "y" ]; then
- echogreen "Installing B.A.R.T"
-
-
- mkdir -p $ALF_HOME/scripts/bart
- mkdir -p $ALF_HOME/logs/bart
- curl -# -o $TMP_INSTALL/$BART_PROPERTIES $BASE_BART_DOWNLOAD$BART_PROPERTIES
- curl -# -o $TMP_INSTALL/$BART_EXECUTE $BASE_BART_DOWNLOAD$BART_EXECUTE
-
- # Update bart settings
- ALFHOMEESCAPED="${ALF_HOME//\//\\/}"
- BARTLOGPATH="$ALF_HOME/logs/bart"
- ALFBRTPATH="$ALF_HOME/scripts/bart"
- INDEXESDIR="\$\{ALF_DIRROOT\}/solr4"
- # Escape for sed
- BARTLOGPATH="${BARTLOGPATH//\//\\/}"
- ALFBRTPATH="${ALFBRTPATH//\//\\/}"
- INDEXESDIR="${INDEXESDIR//\//\\/}"
-
- sed -i "s/ALF_INSTALLATION_DIR\=.*/ALF_INSTALLATION_DIR\=$ALFHOMEESCAPED/g" $TMP_INSTALL/$BART_PROPERTIES
- sed -i "s/ALFBRT_LOG_DIR\=.*/ALFBRT_LOG_DIR\=$BARTLOGPATH/g" $TMP_INSTALL/$BART_PROPERTIES
- sed -i "s/INDEXES_DIR\=.*/INDEXES_DIR\=$INDEXESDIR/g" $TMP_INSTALL/$BART_PROPERTIES
- cp $TMP_INSTALL/$BART_PROPERTIES $ALF_HOME/scripts/bart/$BART_PROPERTIES
- sed -i "s/ALFBRT_PATH\=.*/ALFBRT_PATH\=$ALFBRTPATH/g" $TMP_INSTALL/$BART_EXECUTE
- cp $TMP_INSTALL/$BART_EXECUTE $ALF_HOME/scripts/bart/$BART_EXECUTE
-
- chmod 700 $ALF_HOME/scripts/bart/$BART_PROPERTIES
- chmod 774 $ALF_HOME/scripts/bart/$BART_EXECUTE
-
- # Install dependency
- apt-get $APTVERBOSITY install duplicity;
-
- # Add to cron tab
- tmpfile=/tmp/crontab.tmp
-
- # read crontab and remove custom entries (usually not there since after a reboot
- # QNAP restores to default crontab: http://wiki.qnap.com/wiki/Add_items_to_crontab#Method_2:_autorun.sh
- -u $ALF_USER crontab -l | grep -vi "alfresco-bart.sh" > $tmpfile
-
- # add custom entries to crontab
- echo "0 5 * * * $ALF_HOME/scripts/bart/$BART_EXECUTE backup" >> $tmpfile
-
- #load crontab from file
- sudo -u $ALF_USER crontab $tmpfile
-
- # remove temporary file
- rm $tmpfile
-
- # restart crontab
-  service cron restart
-
- echogreen "B.A.R.T Cron is installed to run in 5AM every day as the $ALF_USER user"
-
-fi
-
 # Finally, set the permissions
- chown -R $ALF_USER:$ALF_GROUP $ALF_HOME
+ chown -LR $ALF_USER:$ALF_GROUP $ALF_HOME
 if [ -d "$ALF_HOME/www" ]; then
-    chown -R www-data:root $ALF_HOME/www
+    chown -R www:wheel $ALF_HOME/www
 fi
 
 echo
