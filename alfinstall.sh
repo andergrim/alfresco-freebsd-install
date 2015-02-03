@@ -557,7 +557,7 @@ else
 fi
 
 # Finally, set the permissions
- chown -LR $ALF_USER:$ALF_GROUP $ALF_HOME
+chown -LR $ALF_USER:$ALF_GROUP $ALF_HOME
 if [ -d "$ALF_HOME/www" ]; then
     chown -R www:wheel $ALF_HOME/www
 fi

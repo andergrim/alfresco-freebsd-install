@@ -13,7 +13,8 @@ export JRE_HOME=$JAVA_HOME/jre
 export ALF_HOME="/opt/alfresco"
 export CATALINA_HOME="$ALF_HOME/tomcat"
 export CATALINA_PID="${ALF_HOME}/tomcat.pid"
-export USER=alfresco
+export USER="alfresco"
+export GROUP="www"
 
 export LC_ALL=@@LOCALESUPPORT@@
 
@@ -42,12 +43,18 @@ stop_cmd="${name}_stop"
 
 alfresco_start()
 {
-  ${CATALINA_HOME}/bin/catalina.sh start
+  if [ ! -d "$ALF_HOME/logs" ]; then
+    mkdir -p "$ALF_HOME/logs"
+    chown -R $USER:$GROUP $ALF_HOME/logs
+  fi
+  cd $ALF_HOME/logs
+
+  su -m ${USER} -c "${CATALINA_HOME}/bin/catalina.sh start"
 }
 
 alfresco_stop()
 {
- ${CATALINA_HOME}/bin/catalina.sh stop
+  su -m ${USER} -c "${CATALINA_HOME}/bin/catalina.sh stop"
 }
 
 load_rc_config $name
