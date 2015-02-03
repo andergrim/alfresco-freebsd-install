@@ -5,6 +5,8 @@ This install script and guide was created by Kristoffer Andergrim.
 It is entirely based on the [alfresco-ubuntu-install](https://github.com/loftuxab/alfresco-ubuntu-install) project, by Peter Löfgren, Loftux AB. 
 Please visit [https://loftux.se](https://loftux.se/sv?ref=freebsdinstall "loftux.se") (Swedish) [https://loftux.com](https://loftux.com/en/?ref=freebsdinstall "loftux.com") (English) for more information.  
 
+![FreeBSD + Alfresco](https://raw.githubusercontent.com/andergrim/alfresco-freebsd-install/master/misc/artwork_128.png)
+
 Alfresco script based install for FreeBSD servers.
 ----------------------------
 
