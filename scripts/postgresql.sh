@@ -1,8 +1,9 @@
-#!/bin/bash
+#!/bin/sh
 # -------
 # Script for install of Postgresql to be used with Alfresco
-# 
-# Copyright 2013 Loftux AB, Peter Löfgren
+#
+# Copyright 2015, Kristoffer Andergrim
+# Based on alfresco-ubuntu-install by Peter Löfgren, Loftux AB
 # Distributed under the Creative Commons Attribution-ShareAlike 3.0 Unported License (CC BY-SA 3.0)
 # -------
 
@@ -13,44 +14,87 @@ echo
 echo "--------------------------------------------"
 echo "This script will install PostgreSQL."
 echo "and create alfresco database and user."
-echo "You may be prompted for sudo password."
+echo "This script should be run as root."
 echo "--------------------------------------------"
 echo
 
-read -e -p "Install PostgreSQL database? [y/n] " -i "n" installpg
-if [ "$installpg" = "y" ]; then
-  sudo apt-get install postgresql
+read -e -p "Install PostgreSQL database? [y/N] " INSTALLPG
+if [ "$INSTALLPG" = "y" ]; then
+  echo Installing PostgreSQL ...
+  pkg install -y postgresql93-server postgresql93-client > /dev/null
+  
+  echo Adding rc.conf knob setting and initiating system DB ...
+  PGRC=`cat /etc/rc.conf | grep 'postgresql_enable="YES"' |wc -l`
+  if [ "$PGRC" -eq "0" ]; then
+    printf '\npostgresql_enable="YES"\n' >> /etc/rc.conf
+  fi
+
+  /usr/local/etc/rc.d/postgresql initdb
+
+
   echo
-  echo "You will now set the default password for the postgres user."
-  echo "This will open a psql terminal, enter:"
+  read -e -p "Configure PostgreSQL for listening to remote connections? [y/N] " CONFIGHOST
+  if [ "$CONFIGHOST" = "y" ]; then
+    echo Editing configuration files ...
+    PGCONFIG="/usr/local/pgsql/data/postgresql.conf"
+    awk '/listen_addresses/{print;print "listen_addresses = '"'"'*'"'"'";next}1' $PGCONFIG > $PGCONFIG.tmp && mv $PGCONFIG.tmp $PGCONFIG
+  
+    echo
+    echo "Enter an ip address and netmask to allow remote connections from, in this form: 192.168.0.1/24"
+    read -e -p "Just press enter to skip this step (you need to add it manually later): " CONFIGIP
+
+    if [ "$CONFIGIP" = "" ]; then
+      echo "Skipping Client Authentication configuration. See the information at the end of this"
+      echo "script on how to do this manually."
+    else
+      printf "\n\nhost\tall\tall\t$CONFIGIP\tmd5\n" >> /usr/local/pgsql/data/pg_hba.conf
+    fi
+  fi
+
   echo
-  echo "\\password postgres"
-  echo
-  echo "and follow instructions for setting postgres admin password."
-  echo "Press Ctrl+D or type \\q to quit psql terminal"
-  echo "START psql --------"
-  sudo -u postgres psql postgres
-  echo "END psql --------"
-  echo
+  echo "Starting postgresql service ..."
+  service postgresql start
+
+  if [ "$?" -gt "0" ]; then
+    echo
+    echo "Could not start postgresql. Examine output of the attempt above, or consult the "
+    echo "logs for information on how to resolve this."
+    echo "PostgreSQL setup aborted!"
+    exit 1
+  fi
+
+  read -e -p "Create Alfresco Database and user? [y/N] " CREATEDB
+  
+  if [ "$CREATEDB" = "y" ]; then
+    echo "Creating PostgreSQL superuser postgres. You will now be prompted for a password."
+    echo "Make sure you don't lose it."
+    su pgsql -c "createuser -sdrP postgres"
+
+    echo
+    echo "Creating the PostgreSQL Alfresco user $ALFRESCOUSER. The password you chose here goes into the"
+    echo "alfresco-global.properties file"
+    su pgsql -c "createuser -D -A -P $ALFRESCOUSER"
+
+    echo
+    echo "Creating Alfresco database ..."
+    su pgsql -c "createdb -O $ALFRESCOUSER $ALFRESCODB"
+  fi
+
 fi
 
-read -e -p "Create Alfresco Database and user? [y/n] " -i "n" createdb
-if [ "$createdb" = "y" ]; then
-  sudo -u postgres createuser -D -A -P $ALFRESCOUSER
-  sudo -u postgres createdb -O $ALFRESCOUSER $ALFRESCODB
-  echo
-  echo "Remember to update alfresco-global.properties with the alfresco database password"
-  echo
-fi
-
 echo
-echo "You must update postgresql configuration to allow password based authentication"
-echo "(if you have not already done this)."
+echo "If you didn't configure remote connection listening earlier you need to make the following "
+echo "changes to your postgresql configuration:"
 echo
-echo "Add the following to pg_hba.conf or postgresql.conf (depending on version of postgresql installed)"
-echo "located in folder /etc/postgresql/<version>/main/"
+echo "Add the following to /usr/local/pgsql/data/pg_hba.conf"
+echo "host all all 192.168.0.1/24 md5"
+echo "(With the interface address and netmask matching your setup)"
 echo
-echo "host all all 127.0.0.1/32 password"
+echo "Add the following to /usr/local/pgsql/data/postgresql.conf"
+echo "listen_addresses = \"*\""
+echo "(Or a comma separated list of ip addresses to listen on)"
 echo
-echo "After you have updated, restart the postgres server /etc/init.d/postgresql restart"
+echo "After you have updated, restart the postgres server service postgresql restart"
+echo "Before starting Alfresco you can test the database setup by running "
+echo "The following command: psql -U $ALFRESCOUSER -d $ALFRESCODB"
 echo
