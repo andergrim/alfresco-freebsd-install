@@ -31,6 +31,7 @@ Current Alfresco version is 5.0.c
 
 The installation has been tested on the following versions /architectures of FreeBSD:
  + FreeBSD 10.0-RELEASE / amd64
+ + FreeBSD 10.1-RELEASE / amd64
 
 All install options will be presented with an introduction. They default to 'n' (no), so type y to actually install that component. You need root access to install.  
 
