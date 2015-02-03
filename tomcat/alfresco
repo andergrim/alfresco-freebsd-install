@@ -38,23 +38,45 @@ rcvar="alfresco_enable"
 procname="java"
 pidfile="$CATALINA_PID"
 
+start_precmd="${name}_prestart"
 start_cmd="${name}_start"
-stop_cmd="${name}_stop"
 
-alfresco_start()
+stop_precmd="${name}_prestop"
+stop_cmd=":"
+stop_postcmd="${name}_poststop"
+
+alfresco_prestart()
 {
   if [ ! -d "$ALF_HOME/logs" ]; then
     mkdir -p "$ALF_HOME/logs"
     chown -R $USER:$GROUP $ALF_HOME/logs
   fi
-  cd $ALF_HOME/logs
 
+}
+
+alfresco_start()
+{
+  cd $ALF_HOME/logs
   su -m ${USER} -c "${CATALINA_HOME}/bin/catalina.sh start"
 }
 
-alfresco_stop()
+alfresco_prestop()
 {
-  su -m ${USER} -c "${CATALINA_HOME}/bin/catalina.sh stop"
+  SHUTDOWN_PORT=`sockstat | grep 8005 | wc -l`
+  if [ "$SHUTDOWN_PORT" -eq "0" ]; then
+    echo "WARNING! Trying to shutdown before properly started. Waiting 120 seconds before stopping."
+    sleep 120
+    su -m ${USER} -c "${CATALINA_HOME}/bin/catalina.sh stop"
+    sleep 10
+  else
+    su -m ${USER} -c "${CATALINA_HOME}/bin/catalina.sh stop"
+    sleep 10
+  fi
+}
+
+alfresco_poststop()
+{
+  rm -rf $CATALINA_HOME/temp/*
 }
 
 load_rc_config $name

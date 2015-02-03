@@ -163,6 +163,7 @@ if [ "$INSTALLTOMCAT" = "y" ]; then
   # Create /shared
   mkdir -p $CATALINA_HOME/shared/classes/alfresco/extension
   mkdir -p $CATALINA_HOME/shared/classes/alfresco/web-extension
+  mkdir -p $CATALINA_HOME/shared/lib
   # Add endorsed dir
   mkdir -p $CATALINA_HOME/endorsed
   echo
