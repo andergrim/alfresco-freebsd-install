@@ -278,6 +278,10 @@ else
   echo "Skipping install of nginx"
 fi
 
+###
+# DEBUG EXIT
+exit 0
+
 echo
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
 echo "Install Java JDK."
