@@ -13,6 +13,8 @@ Alfresco script based install for FreeBSD servers.
 This script will help you set up an Alfresco server instance with all necessary third party components.  
 Some will be installed via FreeBSD pkgs (pkgng is assumed to be bootstrapped and working), some directly downloaded. The script will walk you through the process. In the end, there will be some manual tasks to complete the installation.
 
+The script also provides a rc.d script to control afresco as well as helper scripts for installing and configuring a database server (PostgreSQL, MySQL or MariaDB). 
+
 Installing
 ----
 To start the install, in the terminal run:
@@ -25,6 +27,10 @@ chmod u+x alfinstall.sh
 
 curl is not available by default in the FreeBSD environment, so you need to install its package before starting the installation.
 
+Current Alfresco version is 5.0.c
+
+The installation has been tested on the following versions /architectures of FreeBSD:
+ + FreeBSD 10.0-RELEASE / amd64
 
 All install options will be presented with an introduction. They default to 'n' (no), so type y to actually install that component. You need root access to install.  
 
