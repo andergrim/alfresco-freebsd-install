@@ -247,7 +247,7 @@ echo "to Sharepoint plugin."
 echo "You can run Alfresco fine without installing nginx."
 echo "If you prefer to use Apache httpd or lighttpd, install that manually."
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-read -e -p "Install nginx${ques} [y/n] " INSTALLNGINX
+read -e -p "Install nginx${ques} [y/N] " INSTALLNGINX
 if [ "$INSTALLNGINX" = "y" ]; then
   echoblue "Installing nginx..."
   echo
