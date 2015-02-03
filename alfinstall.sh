@@ -86,7 +86,7 @@ if [ "`which curl`" = "" ]; then
   echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
   echo "You need to install curl. Curl is used for downloading components to install."
   echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-  pkg install -y curl;
+  pkg install -y curl > /dev/null;
 fi
 
 URLERROR=0
@@ -140,11 +140,11 @@ echo "Tomcat is the application server that runs Alfresco."
 echo "You will also get the option to install jdbc lib for Postgresql or MySql/MariaDB."
 echo "Install the jdbc lib for the database you intend to use."
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-read -e -p "Install Tomcat [y/N] " installtomcat
+read -e -p "Install Tomcat [y/N] " INSTALLTOMCAT
 
-if [ "$installtomcat" = "y" ]; then
+if [ "$INSTALLTOMCAT" = "y" ]; then
   echogreen "Installing Tomcat"
-  pkg install -y tomcat7
+  pkg install -y tomcat7 > /dev/null
  
   # Make sure install dir exists, then create symbolic link
   mkdir -p $ALF_HOME
@@ -213,21 +213,22 @@ if [ "$installtomcat" = "y" ]; then
   fi
 
   echo
-  read -e -p "Install Postgres JDBC Connector${ques} [y/n] " -i "n" installpg
-  if [ "$installpg" = "y" ]; then
-	curl -# -O $JDBCPOSTGRESURL/$JDBCPOSTGRES
-	mv $JDBCPOSTGRES $CATALINA_HOME/lib
+  read -e -p "Install Postgres JDBC Connector${ques} [y/N] " INSTALLPG
+  if [ "$INSTALLPG" = "y" ]; then
+	  pkg install -y postgresql-jdbc-9.2.1004 > /dev/null
+	  cp /usr/local/share/java/classes/postgresql.jar $CATALINA_HOME/lib
   fi
   echo
-  read -e -p "Install Mysql JDBC Connector${ques} [y/n] " -i "n" installmy
-  if [ "$installmy" = "y" ]; then
+  read -e -p "Install Mysql JDBC Connector${ques} [y/N] " INSTALLMY
+  if [ "$INSTALLMY" = "y" ]; then
     cd /tmp/alfrescoinstall
-	curl -# -L -O $JDBCMYSQLURL/$JDBCMYSQL
-	tar xf $JDBCMYSQL
-	cd "$(find . -type d -name "mysql-connector*")"
-	mv mysql-connector*.jar $CATALINA_HOME/lib
+	  curl -# -L -O $JDBCMYSQLURL/$JDBCMYSQL
+	  tar xf $JDBCMYSQL
+	  cd "$(find . -type d -name "mysql-connector*")"
+	  mv mysql-connector*.jar $CATALINA_HOME/lib
   fi
-  chown -R $ALF_USER:$ALF_GROUP $CATALINA_HOME
+
+  chown -LR $ALF_USER:$ALF_GROUP $CATALINA_HOME
   echo
   echogreen "Finished installing Tomcat"
   echo
@@ -236,6 +237,7 @@ else
   echo
 fi
 
+
 echo
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
 echo "Nginx can be used as frontend to Tomcat."
@@ -243,36 +245,31 @@ echo "This installation will add config default proxying to Alfresco tomcat."
 echo "The config file also have sample config for ssl and proxying"
 echo "to Sharepoint plugin."
 echo "You can run Alfresco fine without installing nginx."
-echo "If you prefer to use Apache, install that manually. Or you can use iptables"
-echo "forwarding, sample script in $ALF_HOME/scripts/iptables.sh"
+echo "If you prefer to use Apache httpd or lighttpd, install that manually."
 echoblue "- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -"
-read -e -p "Install nginx${ques} [y/n] " -i "n" installnginx
-if [ "$installnginx" = "y" ]; then
-  echoblue "Installing nginx. Fetching packages..."
+read -e -p "Install nginx${ques} [y/n] " INSTALLNGINX
+if [ "$INSTALLNGINX" = "y" ]; then
+  echoblue "Installing nginx..."
   echo
-sudo -s << EOF
-  echo "deb http://nginx.org/packages/mainline/ubuntu $(lsb_release -cs) nginx" >> /etc/apt/sources.list
-  curl -# -o /tmp/alfrescoinstall/nginx_signing.key http://nginx.org/keys/nginx_signing.key
-  apt-key add /tmp/alfrescoinstall/nginx_signing.key
-  #echo "deb http://ppa.launchpad.net/nginx/stable/ubuntu $(lsb_release -cs) main" >> /etc/apt/sources.list
-  #apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C300EE8C
-  # Alternate with spdy support and more, change  apt install -> nginx-custom
-  #echo "deb http://ppa.launchpad.net/brianmercer/nginx/ubuntu $(lsb_release -cs) main" >> /etc/apt/sources.list
-  #apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 8D0DC64F
-EOF
-  apt-get $APTVERBOSITY update && apt-get $APTVERBOSITY install nginx
-  mv /etc/nginx/nginx.conf /etc/nginx/nginx.conf.backup
-  curl -# -o /etc/nginx/nginx.conf $BASE_DOWNLOAD/nginx/nginx.conf
+  pkg install -y nginx-devel > /dev/null
+  mv /usr/local/etc/nginx/nginx.conf /usr/local/etc/nginx/nginx.conf.backup
+  curl -# -o /usr/local/etc/nginx/nginx.conf $BASE_DOWNLOAD/nginx/nginx.conf
   mkdir -p /var/cache/nginx/alfresco
   mkdir -p $ALF_HOME/www
   if [ ! -f "$ALF_HOME/www/maintenance.html" ]; then
     echo "Downloading maintenance html page..."
     curl -# -o $ALF_HOME/www/maintenance.html $BASE_DOWNLOAD/nginx/maintenance.html
   fi
-  chown -R www-data:root /var/cache/nginx/alfresco
-  chown -R www-data:root $ALF_HOME/www
-  ## Reload config file
-  service nginx reload
+  chown -R www:wheel /var/cache/nginx/alfresco
+  chown -R www:wheel $ALF_HOME/www
+  touch /var/log/nginx-error.log
+  chown www:www /var/log/nginx-error.log
+
+  # Start service
+  echo 
+  echo "Starting nginx service..."
+  printf '\nnginx_enable="YES"\n' >> /etc/rc.conf
+  service nginx start
 
   echo
   echogreen "Finished installing nginx"
