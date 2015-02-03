@@ -13,6 +13,7 @@ export ALF_HOME=/opt/alfresco
 export CATALINA_HOME=$ALF_HOME/tomcat
 export CATALINA_PID="${ALF_HOME}/tomcat.pid"
 export USER=alfresco
+export GROUP=www
 
 cd $ALF_HOME/addons
 
@@ -116,7 +117,7 @@ copy(){
 				rm -rf ${CATALINA_HOME}/webapps/alfresco
 				rm -rf ${CATALINA_HOME}/webapps/share
 				echo "Restoring permissions on Tomcat"
-				chown -R ${USER}:wheel ${CATALINA_HOME}
+				chown -R ${USER}:{GROUP} ${CATALINA_HOME}/webapps
             fi
         fi
 }
