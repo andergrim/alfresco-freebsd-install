@@ -117,7 +117,7 @@ copy(){
 				rm -rf ${CATALINA_HOME}/webapps/alfresco
 				rm -rf ${CATALINA_HOME}/webapps/share
 				echo "Restoring permissions on Tomcat"
-				chown -R ${USER}:{GROUP} ${CATALINA_HOME}/webapps
+				chown -R ${USER}:${GROUP} ${CATALINA_HOME}/webapps
             fi
         fi
 }
